@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: counter
+  namespace: dev
+spec:
+  containers:
+  - name: count
+    image: busybox
+    args: [/bin/sh, -c,'i=0; while true; do echo "Thanks for visiting devopscube! > /var/log/counter.log"; i=$((i+1)); sleep 1; done']
+    volumeMounts:
+      - name: varlog
+        mountPath: /var/log
+  volumes:
+    - name: varlog
+      emptyDir: {}

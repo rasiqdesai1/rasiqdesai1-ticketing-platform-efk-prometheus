@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: {{.Values.clientImageKey.repository}}:{{.Values.clientImageKey.tag}}
+          imagePullPolicy: {{.Values.clientImageKey.pullPolicy}}
+          resources:
+            limits:
+              memory: {{.Values.resources.limits.memory}}
+              cpu: {{.Values.resources.limits.cpu}}
+          ports:
+            - containerPort: {{.Values.appServicePort}}
+          env:
+            - name: BASE_URL
+              value: {{.Values.ticketingApp.BASE_URL}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-srv
+spec:
+  selector:
+    app: client
+  ports:
+    - port: {{.Values.appServicePort}}
+      targetPort: {{.Values.appServicePort}}

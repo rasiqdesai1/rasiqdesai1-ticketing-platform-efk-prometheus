@@ -1,0 +1,35 @@
+name: deploy-efk
+
+env:
+  CLUSTER_NAME  : ${{ secrets.cluster_name }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - efk-prometheus
+    paths:
+      - "charts/efk/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - run: doctl kubernetes cluster kubeconfig save {{ env.CLUSTER_NAME }}
+      - name: 'Deploy'
+        uses: 'deliverybot/helm@v1'
+        with:
+          release: 'efk'
+          namespace: 'default'
+          chart: 'cryptexlabs/efk'
+          chart-version: '7.8.0'
+          value-files: >-
+            [
+                "prod_values.yaml"
+            ]
+        env:
+          KUBECONFIG_FILE: '${{ secrets.KUBECONFIG }}'

@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  labels:
+    {{- include "fluentd.labels" . | nindent 4 }}
+data:
+{{- range $key, $value := .Values.fileConfigs }}
+  {{$key }}: |-
+    {{- $value | nindent 4 }}
+{{- end }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-main
+  labels:
+    {{- include "fluentd.labels" . | nindent 4 }}
+data:
+  fluent.conf: |-
+    # do not collect fluentd logs to avoid infinite loops.
+    <label @FLUENT_LOG>
+      <match **>
+        @type null
+        @id ignore_fluent_logs
+      </match>
+    </label>
+
+…
+
+<match **>
+   @type elasticsearch
+   @id out_es
+   @log_level info
+   …
+   logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
+   logstash_format "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_FORMAT'] || 'true'}"
+   index_name "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_INDEX_NAME'] || 'logstash'}"
+   type_name "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_TYPE_NAME'] || 'fluentd'}"
+   <buffer>
+     …
+   </buffer>
+</match>
+    
+    @include config.d/*.conf
+    {{- range $key := .Values.configMapConfigs }}
+    {{- print "@include " $key ".d/*"  | nindent 4 }}
+    {{- end }}

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-depl
+spec:
+  replicas: {{.Values.replicaCount}}
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: {{.Values.authImageKey.repository}}:{{.Values.authImageKey.tag}}
+          imagePullPolicy: {{.Values.authImageKey.pullPolicy}}
+          env:
+            - name: MONGO_URI
+              value: 'mongodb://auth-mongo-srv:{{.Values.mongoDB.port}}/auth'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+          resources:
+            limits:
+              memory: {{.Values.resources.limits.memory}}
+              cpu: {{.Values.resources.limits.cpu}}
+          ports:
+            - containerPort: {{.Values.appServicePort}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-srv
+spec:
+  selector:
+    app: auth
+  ports:
+    - port: {{.Values.appServicePort}}
+      targetPort: {{.Values.appServicePort}}

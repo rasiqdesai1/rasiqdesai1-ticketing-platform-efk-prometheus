@@ -1,0 +1,72 @@
+apiVersion: skaffold/v2beta26
+kind: config
+deploy:
+  helm:
+    releases:
+      - name: full-coral
+        skipBuildDependencies: true
+        chartPath: ./charts
+        valuesFiles: [./charts/environments/values.dev.yaml]
+        artifactOverrides:
+          clientImageKey: phanirajabhandari/client
+          authImageKey: phanirajabhandari/auth
+          ticketsImageKey: phanirajabhandari/tickets
+          ordersImageKey: phanirajabhandari/orders
+          paymentsImageKey: phanirajabhandari/payments
+        imageStrategy:
+          helm: {}
+        
+build:
+  tagPolicy:
+    sha256: {}
+  local:
+    push: false
+  artifacts:
+    - image: phanirajabhandari/auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: phanirajabhandari/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.js"
+            dest: .
+    - image: phanirajabhandari/tickets
+      context: tickets
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: phanirajabhandari/orders
+      context: orders
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: phanirajabhandari/expiration
+      context: expiration
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
+    - image: phanirajabhandari/payments
+      context: payments
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .

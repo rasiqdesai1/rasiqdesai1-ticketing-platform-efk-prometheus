@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: {{.Values.ordersImageKey.repository}}:{{.Values.ordersImageKey.tag}}
+          imagePullPolicy: {{.Values.ordersImageKey.pullPolicy}}
+          env:
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLUSTER_ID
+              value: ticketing
+            - name: MONGO_URI
+              value: 'mongodb://orders-mongo-srv:{{.Values.mongoDB.port}}/orders'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+          resources:
+            limits:
+              memory: {{.Values.resources.limits.memory}}
+              cpu: {{.Values.resources.limits.cpu}}
+          ports:
+            - containerPort: {{.Values.appServicePort}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-srv
+spec:
+  selector:
+    app: orders
+  ports:
+    - port: {{.Values.appServicePort}}
+      targetPort: {{.Values.appServicePort}}
